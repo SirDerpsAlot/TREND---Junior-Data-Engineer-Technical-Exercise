@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+from datetime import datetime
 import json
 import sqlite3
 import requests
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 # DB will be created at "<repo_root>/data/spacex.db"
 DB_SUBDIR = "data"
@@ -43,6 +44,24 @@ def fetch_data(url: str) -> List[Dict[str, Any]]:
 def init_schema(conn: sqlite3.Connection, schema_file: Path):
     conn.executescript(schema_file.read_text(encoding="utf-8"))
 
+
+def split_date_parts(date_utc: Optional[str], precision: Optional[str]) -> Tuple[Optional[int], Optional[int], Optional[int]]:
+    try:
+       dt = datetime.fromisoformat(date_utc.replace("Z", "+00:00"))
+    except Exception:
+        return (None, None, None)
+    
+    precision = (precision or "").lower()
+    year = dt.year
+    month = None
+    day = None
+    
+    if precision in ("month", "day", "hour"):
+        month = dt.month
+    if precision in ("day", "hour"):
+        day = dt.day
+    return (year, month, day)
+    
 # -------- inserts --------
 def insert_rocket(cur: sqlite3.Cursor, r: Dict[str, Any]):
     height   = r.get("height")   or {}
@@ -77,48 +96,62 @@ def insert_rocket(cur: sqlite3.Cursor, r: Dict[str, Any]):
 
 def insert_launch(cur: sqlite3.Cursor, L: Dict[str, Any]):
     fair = L.get("fairings") or {}
+    date_key = insert_launch_date(cur, L)
+    year, month, day = split_date_parts(L.get("date_utc"), L.get("date_precision"))
     row = (
         L.get("id"),
         L.get("flight_number"),
         L.get("name"),
+        year, month, day,
+        date_key,
+        bool_to_int(L.get("tbd")),
+        bool_to_int(L.get("net")),
+        L.get("window"),
+        L.get("rocket"),
+        bool_to_int(L.get("success")),
+        L.get("details"),
+        bool_to_int(fair.get("reused")),
+        bool_to_int(fair.get("recovery_attempt")),
+        bool_to_int(fair.get("recovered")),
+        dumps_array(fair.get("ships")),
+        dumps_array(L.get("failures")),
+        dumps_array(L.get("crew")),
+        dumps_array(L.get("ships")),
+        dumps_array(L.get("capsules")),
+        L.get("launchpad"),
+        bool_to_int(L.get("upcoming")),
+        bool_to_int(L.get("auto_update", True)),
+    )
+    cur.execute("""
+        INSERT OR REPLACE INTO launches (
+          id, flight_number, name,
+          year, month, day, date_key,
+          tbd, net, "window",
+          rocket, success, details,
+          fairings_reused, fairings_recovery_attempt, fairings_recovered,
+          fairings_ships_json, failures_json, crew_json, ships_json, capsules_json,
+          launchpad, upcoming, auto_update
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, row)
+
+def insert_launch_date(cur: sqlite3.Cursor, L: Dict[str, Any]) -> str:
+    launch_id = L.get("id")
+    row = (
+        launch_id,
         L.get("date_utc"),
         L.get("date_unix"),
         L.get("date_local"),
         L.get("date_precision"),
         L.get("static_fire_date_utc"),
         L.get("static_fire_date_unix"),
-        bool_to_int(L.get("tbd")),   
-        bool_to_int(L.get("net")),
-        L.get("window"),
-        L.get("rocket"),
-        bool_to_int(L.get("success")),
-        bool_to_int(L.get("upcoming")),
-        L.get("details"),
-        bool_to_int(fair.get("reused")),
-        bool_to_int(fair.get("recovery_attempt")),
-        bool_to_int(fair.get("recovered")),
-        L.get("launchpad"),
-        bool_to_int(L.get("auto_update", True)),
-        dumps_array(L.get("ships")),
-        dumps_array(fair.get("ships")),
-        dumps_array(L.get("crew")),
-        dumps_array(L.get("capsules")),
-        dumps_array(L.get("failures")) 
     )
     cur.execute("""
-        INSERT OR REPLACE INTO launches (
-          id, flight_number, name,
-          date_utc, date_unix, date_local, date_precision,
-          static_fire_date_utc, static_fire_date_unix,
-          tbd, net, "window",
-          rocket, success, upcoming, details,
-          fairings_reused, fairings_recovery_attempt, fairings_recovered,
-          launchpad,
-          auto_update,
-          ships_json, fairings_ships_json, crew_json, capsules_json,
-          failures_json
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        INSERT OR REPLACE INTO launch_dates (
+          launch_id, date_utc, date_unix, date_local, date_precision,
+          static_fire_date_utc, static_fire_date_unix
+        ) VALUES (?,?,?,?,?,?,?)
     """, row)
+    return launch_id
 
 def insert_launch_cores(cur: sqlite3.Cursor, launch_id: str, L: Dict[str, Any]):
     cur.execute("DELETE FROM launch_cores WHERE launch_id = ?", (launch_id,))

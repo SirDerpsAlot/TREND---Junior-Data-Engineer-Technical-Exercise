@@ -13,14 +13,6 @@ def db_path() -> Path:
     return p / DB_FILENAME
 
 SQL_FAILURE_RATE_BY_YEAR = """
-WITH filtered AS (
-  SELECT
-    strftime('%Y', datetime(date_unix, 'unixepoch')) AS year,
-    success
-  FROM launches
-  WHERE upcoming = 0
-    AND success IS NOT NULL
-)
 SELECT
   year,
   SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END)               AS failures,
@@ -28,7 +20,9 @@ SELECT
   COUNT(*)                                                   AS total,
   ROUND(100.0 * SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END)
              / COUNT(*), 2)                                  AS failure_rate_pct
-FROM filtered
+FROM launches
+WHERE upcoming = 0
+  AND success IS NOT NULL
 GROUP BY year
 ORDER BY year;
 """

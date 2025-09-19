@@ -2,37 +2,47 @@
 BEGIN;
 
 -- Fact: Launches
-CREATE TABLE launches (
-  id               TEXT PRIMARY KEY,                          
+CREATE TABLE IF NOT EXISTS launches (
+  id               TEXT PRIMARY KEY,
   flight_number    INTEGER NOT NULL,
   name             TEXT    NOT NULL UNIQUE,
-  date_utc         TEXT    NOT NULL,
-  date_unix        INTEGER NOT NULL,
-  date_local       TEXT    NOT NULL,
-  date_precision   TEXT    NOT NULL CHECK (date_precision IN ('half','quarter','year','month','day','hour')),
-  static_fire_date_utc  TEXT,
-  static_fire_date_unix INTEGER,
+  year             INTEGER,
+  month            INTEGER,
+  day              INTEGER,
+  date_key         TEXT NOT NULL,
   tbd              INTEGER CHECK (tbd IN (0,1) OR tbd IS NULL),
   net              INTEGER CHECK (net IN (0,1) OR net IS NULL),
-  window           INTEGER,
-  rocket           TEXT,     
-  success          INTEGER CHECK (success IN (0,1) OR success IS NULL),   
+  "window"         INTEGER,
+  rocket           TEXT,
+  success          INTEGER CHECK (success IN (0,1) OR success IS NULL),
   details          TEXT,
   fairings_reused          INTEGER CHECK (fairings_reused IN (0,1) OR fairings_reused IS NULL),
   fairings_recovery_attempt INTEGER CHECK (fairings_recovery_attempt IN (0,1) OR fairings_recovery_attempt IS NULL),
   fairings_recovered       INTEGER CHECK (fairings_recovered IN (0,1) OR fairings_recovered IS NULL),
   fairings_ships_json      TEXT,
-  failures_json             TEXT,
-  crew_json                 TEXT,
-  ships_json                TEXT,
-  capsules_json             TEXT,
+  failures_json            TEXT,
+  crew_json                TEXT,
+  ships_json               TEXT,
+  capsules_json            TEXT,
   launchpad        TEXT,
   upcoming         INTEGER NOT NULL CHECK (upcoming IN (0,1)),
   auto_update      INTEGER CHECK (auto_update IN (0,1) OR auto_update IS NULL)
 );
-CREATE INDEX IF NOT EXISTS idx_launches_date_unix ON launches(date_unix);
+CREATE INDEX IF NOT EXISTS idx_launches_ymd       ON launches(year, month, day);
 CREATE INDEX IF NOT EXISTS idx_launches_success   ON launches(success);
 CREATE INDEX IF NOT EXISTS idx_launches_rocket    ON launches(rocket);
+
+-- Launch dates
+CREATE TABLE IF NOT EXISTS launch_dates (
+  launch_id TEXT PRIMARY KEY,                
+  date_utc TEXT,
+  date_unix INTEGER,
+  date_local TEXT,
+  date_precision TEXT,
+  static_fire_date_utc TEXT,
+  static_fire_date_unix INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_launch_dates_unix ON launch_dates(date_unix);
 
 
 -- Cores used per launch (1 launch : many cores)
