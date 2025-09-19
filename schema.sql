@@ -44,8 +44,6 @@ CREATE TABLE IF NOT EXISTS launch_dates (
   static_fire_date_unix INTEGER
 );
 
-
-
 -- Cores used per launch (1 launch : many cores)
 CREATE TABLE IF NOT EXISTS launch_cores (
   id               INTEGER PRIMARY KEY AUTOINCREMENT,

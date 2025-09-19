@@ -1,8 +1,7 @@
 import os, sqlite3
 from pathlib import Path
-from typing import List, Tuple, Sequence
+from typing import List, Tuple
 from matplotlib import pyplot as plt
-import numpy as np
 DB_SUBDIR = "data"
 DB_FILENAME = "spacex.db"
 
@@ -91,7 +90,6 @@ def pie_chart(labels, values, title: str, top_n: int = 8, outfile: Path | None =
     values_top = values
 
   fig = plt.figure()
-  # (Tooling note: no seaborn, one chart per figure, no explicit colors)
   plt.pie(values_top, labels=labels_top, autopct="%1.1f%%", startangle=90)
   plt.title(title)
   if outfile:
@@ -116,18 +114,18 @@ def print_results(headers: List[str], rows: List[Tuple]):
 def question_top_payload_manufacturers(conn: sqlite3.Connection) -> None:
     headers, rows = run_query(conn, SQL_TOP_MANUFACTURERS)
     print("\nTop Payload Manufacturers (by payload count)")
-    print_results(headers, rows[:25])  # show top 25 in console
+    print_results(headers, rows[:25])  
     labels = [r[0] for r in rows]
     values = [r[1] for r in rows]
     pie_chart(labels, values,
              title="Payload Manufacturers",
-             filename="payload_manufacturers.png",
+             outfile="payload_manufacturers.png",
              top_n=8)
 
 def question_top_payload_customers(conn: sqlite3.Connection) -> None:
     headers, rows = run_query(conn, SQL_TOP_CUSTOMERS)
     print("\nTop Payload Customers (by payload count)")
-    print_results(headers, rows[:25])  # show top 25 in console
+    print_results(headers, rows[:25])  
     labels = [r[0] for r in rows]
     values = [r[1] for r in rows]
     pie_chart(labels, values,
@@ -153,7 +151,7 @@ def main():
             headers, rows = run_query(conn, SQL_AVG_DAYS_BETWEEN_CORE_REUSES)
             print_results(headers, rows)
 
-            # Q3) Top payload manufacturers (+ pie chart)
+            # Q3) Top payload manufacturers
             print("\n[Q3] Top payload manufacturers (by payload count)")
             headers, rows = run_query(conn, SQL_TOP_MANUFACTURERS)
             print_results(headers, rows[:25])
@@ -164,10 +162,10 @@ def main():
             pie_chart(labels, values, title="Payload Manufacturers Share", top_n=8, outfile=out_mfg)
             print(f"Saved pie chart: {out_mfg}")
 
-            # Q4) Top customers (+ pie chart)
+            # Q4) Top customers 
             print("\n[Q4] Top customers (by payload count)")
             headers, rows = run_query(conn, SQL_TOP_CUSTOMERS)
-            print_results(headers, rows[:25])  # show top 25 in console
+            print_results(headers, rows[:25])
 
             labels = [r[0] for r in rows]
             values = [r[1] for r in rows]
