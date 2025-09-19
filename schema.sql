@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS launches (
   year             INTEGER,
   month            INTEGER,
   day              INTEGER,
+  date_unix        INTEGER,
   date_key         TEXT NOT NULL,
   tbd              INTEGER CHECK (tbd IN (0,1) OR tbd IS NULL),
   net              INTEGER CHECK (net IN (0,1) OR net IS NULL),
@@ -31,18 +32,18 @@ CREATE TABLE IF NOT EXISTS launches (
 CREATE INDEX IF NOT EXISTS idx_launches_ymd       ON launches(year, month, day);
 CREATE INDEX IF NOT EXISTS idx_launches_success   ON launches(success);
 CREATE INDEX IF NOT EXISTS idx_launches_rocket    ON launches(rocket);
+CREATE INDEX IF NOT EXISTS idx_launch_dates_unix ON launches(date_unix);
 
 -- Launch dates
 CREATE TABLE IF NOT EXISTS launch_dates (
   launch_id TEXT PRIMARY KEY,                
   date_utc TEXT,
-  date_unix INTEGER,
   date_local TEXT,
   date_precision TEXT,
   static_fire_date_utc TEXT,
   static_fire_date_unix INTEGER
 );
-CREATE INDEX IF NOT EXISTS idx_launch_dates_unix ON launch_dates(date_unix);
+
 
 
 -- Cores used per launch (1 launch : many cores)

@@ -27,6 +27,22 @@ GROUP BY year
 ORDER BY year;
 """
 
+SQL_AVG_DAYS_BETWEEN_CORE_REUSES = """
+WITH diffs AS (
+  SELECT
+    (l.date_unix - LAG(l.date_unix) OVER (
+       PARTITION BY lc.core_id ORDER BY l.date_unix
+    )) / 86400.0 AS days_between
+  FROM launch_cores AS lc
+  JOIN launches AS l
+    ON l.id = lc.launch_id
+)
+SELECT
+  ROUND(AVG(days_between), 2) AS average_days_between_flights
+FROM diffs
+WHERE days_between IS NOT NULL;
+ """
+
 def run_query(con: sqlite3.Connection, query: str) -> Tuple[List[str], List[Tuple]]:
     cur = con.cursor()
     cur.execute(query)
@@ -50,7 +66,7 @@ def main():
     
     try:
         with conn:
-            headers, rows = run_query(conn, SQL_FAILURE_RATE_BY_YEAR)
+            headers, rows = run_query(conn, SQL_AVG_DAYS_BETWEEN_CORE_REUSES)
             print_results(headers, rows)
     finally:
         conn.close()

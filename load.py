@@ -103,6 +103,7 @@ def insert_launch(cur: sqlite3.Cursor, L: Dict[str, Any]):
         L.get("flight_number"),
         L.get("name"),
         year, month, day,
+        L.get("date_unix"),
         date_key,
         bool_to_int(L.get("tbd")),
         bool_to_int(L.get("net")),
@@ -125,13 +126,13 @@ def insert_launch(cur: sqlite3.Cursor, L: Dict[str, Any]):
     cur.execute("""
         INSERT OR REPLACE INTO launches (
           id, flight_number, name,
-          year, month, day, date_key,
+          year, month, day, date_unix, date_key,
           tbd, net, "window",
           rocket, success, details,
           fairings_reused, fairings_recovery_attempt, fairings_recovered,
           fairings_ships_json, failures_json, crew_json, ships_json, capsules_json,
           launchpad, upcoming, auto_update
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, row)
 
 def insert_launch_date(cur: sqlite3.Cursor, L: Dict[str, Any]) -> str:
@@ -139,7 +140,6 @@ def insert_launch_date(cur: sqlite3.Cursor, L: Dict[str, Any]) -> str:
     row = (
         launch_id,
         L.get("date_utc"),
-        L.get("date_unix"),
         L.get("date_local"),
         L.get("date_precision"),
         L.get("static_fire_date_utc"),
@@ -147,9 +147,9 @@ def insert_launch_date(cur: sqlite3.Cursor, L: Dict[str, Any]) -> str:
     )
     cur.execute("""
         INSERT OR REPLACE INTO launch_dates (
-          launch_id, date_utc, date_unix, date_local, date_precision,
+          launch_id, date_utc, date_local, date_precision,
           static_fire_date_utc, static_fire_date_unix
-        ) VALUES (?,?,?,?,?,?,?)
+        ) VALUES (?,?,?,?,?,?)
     """, row)
     return launch_id
 
