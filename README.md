@@ -1,0 +1,1 @@
+# TREND---Junior-Data-Engineer-Technical-Exercise
