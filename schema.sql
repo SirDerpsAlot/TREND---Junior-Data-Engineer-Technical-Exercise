@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS launches (
 CREATE INDEX IF NOT EXISTS idx_launches_ymd       ON launches(year, month, day);
 CREATE INDEX IF NOT EXISTS idx_launches_success   ON launches(success);
 CREATE INDEX IF NOT EXISTS idx_launches_rocket    ON launches(rocket);
-CREATE INDEX IF NOT EXISTS idx_launch_dates_unix ON launches(date_unix);
+CREATE INDEX IF NOT EXISTS idx_launches_unix      ON launches(date_unix);
 
 -- Launch dates
 CREATE TABLE IF NOT EXISTS launch_dates (
