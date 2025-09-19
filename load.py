@@ -17,26 +17,32 @@ PAYLOADS_URL = "https://api.spacexdata.com/v4/payloads"
 
 # -------- path helpers --------
 def repo_root() -> Path:
+    """Returns the path to repository root (parent of this file)."""
     return Path(__file__).resolve().parent
 
 def db_path() -> Path:
+    """Ensures project data directory exists and returns full path to DB file."""
     p = repo_root() / DB_SUBDIR
     p.mkdir(parents=True, exist_ok=True)
     return p / DB_FILENAME
 
 # Utility functions
 def bool_to_int(val):
+    """ Converts a boolean value to an integer (1 or 0) preserving NULL/None."""
     if val is None:
         return None
     return 1 if bool(val) else 0
 
 def dumps_array(arr):
+    """Serizalize a python list to JSON string; defaults to "[]" if None/empty."""
     return json.dumps(arr or [])
 
 def dumps_object(obj):
+    """Serialize a python dict to JSON string; defaults to "{}" if None/empty."""
     return json.dumps(obj or {})
 
 def fetch_data(url: str) -> List[Dict[str, Any]]:
+    """Get and return JSON data from URL, raising on error."""
     r = requests.get(url, timeout=60)
     r.raise_for_status()
     return r.json()
@@ -46,6 +52,7 @@ def init_schema(conn: sqlite3.Connection, schema_file: Path):
 
 
 def split_date_parts(date_utc: Optional[str], precision: Optional[str]) -> Tuple[Optional[int], Optional[int], Optional[int]]:
+    """Splits a date string into (year, month, day) tuple based on precision."""
     try:
        dt = datetime.fromisoformat(date_utc.replace("Z", "+00:00"))
     except Exception:
@@ -64,6 +71,7 @@ def split_date_parts(date_utc: Optional[str], precision: Optional[str]) -> Tuple
     
 # -------- inserts --------
 def insert_rocket(cur: sqlite3.Cursor, r: Dict[str, Any]):
+    """Insert a rocket record into rockets table from SpaceX rocket JSON object."""
     height   = r.get("height")   or {}
     diameter = r.get("diameter") or {}
     mass     = r.get("mass")     or {}
@@ -95,6 +103,7 @@ def insert_rocket(cur: sqlite3.Cursor, r: Dict[str, Any]):
     """, row)
 
 def insert_launch(cur: sqlite3.Cursor, L: Dict[str, Any]):
+    """Insert a launch record into launches table from SpaceX launch JSON object."""
     fair = L.get("fairings") or {}
     date_key = insert_launch_date(cur, L)
     year, month, day = split_date_parts(L.get("date_utc"), L.get("date_precision"))
@@ -136,6 +145,7 @@ def insert_launch(cur: sqlite3.Cursor, L: Dict[str, Any]):
     """, row)
 
 def insert_launch_date(cur: sqlite3.Cursor, L: Dict[str, Any]) -> str:
+    """Insert a launch date record into launch_dates table from SpaceX launch JSON object."""
     launch_id = L.get("id")
     row = (
         launch_id,
@@ -154,6 +164,7 @@ def insert_launch_date(cur: sqlite3.Cursor, L: Dict[str, Any]) -> str:
     return launch_id
 
 def insert_launch_cores(cur: sqlite3.Cursor, launch_id: str, L: Dict[str, Any]):
+    """Replace and insert core usage rows for a launch into launch_cores table."""
     cur.execute("DELETE FROM launch_cores WHERE launch_id = ?", (launch_id,))
 
     for c in L.get("cores") or []:
@@ -179,6 +190,7 @@ def insert_launch_cores(cur: sqlite3.Cursor, launch_id: str, L: Dict[str, Any]):
         """, row)
 
 def insert_payload(cur: sqlite3.Cursor, p: Dict[str, Any]):
+    """Insert a payload record into payloads table from SpaceX payload JSON object. Skips if parent launch is missing."""
     payload_id = p.get("id")
     launch_id  = p.get("launch")
 

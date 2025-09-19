@@ -7,9 +7,11 @@ DB_FILENAME = "spacex.db"
 
 
 def repo_root() -> Path:
+    """Returns the path to repository root (parent of this file)."""
     return Path(__file__).resolve().parent
 
 def db_path() -> Path:
+    """Ensures project data directory exists and returns full path to DB file."""
     p = repo_root() / DB_SUBDIR
     p.mkdir(parents=True, exist_ok=True)
     return p / DB_FILENAME
@@ -79,6 +81,7 @@ GROUP BY customer
 ORDER BY payload_count DESC;
 """
 def pie_chart(labels, values, title: str, top_n: int = 8, outfile: Path | None = None):
+  """Save a simple pie chart (top N plus 'other') for the provided labels/values to outfile."""
 
   labels = list(labels)
   values = list(values)
@@ -98,6 +101,7 @@ def pie_chart(labels, values, title: str, top_n: int = 8, outfile: Path | None =
   
   
 def run_query(con: sqlite3.Connection, query: str) -> Tuple[List[str], List[Tuple]]:
+    """Execute a SQL query and return (column_names, rows)."""
     cur = con.cursor()
     cur.execute(query)
     rows = cur.fetchall()
@@ -106,12 +110,14 @@ def run_query(con: sqlite3.Connection, query: str) -> Tuple[List[str], List[Tupl
 
 
 def print_results(headers: List[str], rows: List[Tuple]):
+    """Preinst tabular results to stdout."""
     print(" | ".join(headers))
     print("-" * 60)
     for row in rows:
         print(" | ".join(str(val) for val in row))
         
 def question_top_payload_manufacturers(conn: sqlite3.Connection) -> None:
+    """Print and chart the top payload manufacturers by count."""
     headers, rows = run_query(conn, SQL_TOP_MANUFACTURERS)
     print("\nTop Payload Manufacturers (by payload count)")
     print_results(headers, rows[:25])  
@@ -123,6 +129,7 @@ def question_top_payload_manufacturers(conn: sqlite3.Connection) -> None:
              top_n=8)
 
 def question_top_payload_customers(conn: sqlite3.Connection) -> None:
+    """Print and chart the top payload customers by count."""
     headers, rows = run_query(conn, SQL_TOP_CUSTOMERS)
     print("\nTop Payload Customers (by payload count)")
     print_results(headers, rows[:25])  
