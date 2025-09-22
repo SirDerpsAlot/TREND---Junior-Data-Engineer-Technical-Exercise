@@ -116,29 +116,6 @@ def print_results(headers: List[str], rows: List[Tuple]):
     for row in rows:
         print(" | ".join(str(val) for val in row))
         
-def question_top_payload_manufacturers(conn: sqlite3.Connection) -> None:
-    """Print and chart the top payload manufacturers by count."""
-    headers, rows = run_query(conn, SQL_TOP_MANUFACTURERS)
-    print("\nTop Payload Manufacturers (by payload count)")
-    print_results(headers, rows[:25])  
-    labels = [r[0] for r in rows]
-    values = [r[1] for r in rows]
-    pie_chart(labels, values,
-             title="Payload Manufacturers",
-             outfile="payload_manufacturers.png",
-             top_n=8)
-
-def question_top_payload_customers(conn: sqlite3.Connection) -> None:
-    """Print and chart the top payload customers by count."""
-    headers, rows = run_query(conn, SQL_TOP_CUSTOMERS)
-    print("\nTop Payload Customers (by payload count)")
-    print_results(headers, rows[:25])  
-    labels = [r[0] for r in rows]
-    values = [r[1] for r in rows]
-    pie_chart(labels, values,
-             title="Payload Customers Share",
-             filename="payload_customers_share.png",
-             top_n=8)
 def main():
     if not os.path.exists(db_path()):
         raise SystemExit(f"Database not found at: {db_path()}. Check load.py for errors")
